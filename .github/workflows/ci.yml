@@ -23,7 +23,7 @@ jobs:
       - run: flutter analyze
       - name: Run tests and add report to summary
         run: |
-          if flutter test --reporter=expanded 2>&1 | tee test-report.txt; then
+          if flutter test --reporter=github 2>&1 | tee test-report.txt; then
             test_status=0
           else
             test_status=$?
@@ -31,7 +31,7 @@ jobs:
 
           {
             printf '## Flutter test report\n\n```text\n'
-            cat test-report.txt
+            sed '/^::group::/d; /^::endgroup::/d' test-report.txt
             printf '\n```\n'
           } >> "$GITHUB_STEP_SUMMARY"
 
