@@ -1,0 +1,17 @@
+name: snap_list
+description: A Flutter list widget with item snapping, scaling, and opacity effects.
+version: 0.1.0
+repository: https://github.com/Bohdandn/flutter-snap-list
+
+environment:
+  sdk: ^3.0.0
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  scrollable_positioned_list: ^0.3.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
