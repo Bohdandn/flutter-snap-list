@@ -265,7 +265,9 @@ class _SnapListState<TValue> extends State<SnapList<TValue>> {
     final thresholdHeight = screenHeight - widget.topOverlayHeight - widget.bottomOverlayHeight - widget.spacing * 2;
 
     double alignment;
-    if (targetIndex == 0) {
+    if (first) {
+      alignment = widget.initialAlignment.clamp(0.0, 1.0);
+    } else if (targetIndex == 0) {
       alignment = ((widget.topOverlayHeight + widget.spacing * 2) / screenHeight).clamp(0, 1);
       //} else if (targetIndex == _items.length - 1) {
       //  alignment = (itemHeight + widget.bottomOverlayHeight + widget.spacing) / screenHeight;

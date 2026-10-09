@@ -1,5 +1,7 @@
 # flutter_snap_list
 
+[![CI](https://github.com/Bohdandn/flutter-snap-list/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/Bohdandn/flutter-snap-list/actions/workflows/ci.yml)
+
 A Flutter widget for displaying a list of dynamically sized items with snapping,
 scale, and opacity effects.
 
