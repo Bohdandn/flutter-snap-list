@@ -1,4 +1,4 @@
-name: snap_list
+name: flutter_snap_list
 description: A Flutter list widget with item snapping, scaling, and opacity effects.
 version: 0.1.0
 repository: https://github.com/Bohdandn/flutter-snap-list

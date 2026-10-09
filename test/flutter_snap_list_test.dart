@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:snap_list/snap_list.dart';
+import 'package:flutter_snap_list/flutter_snap_list.dart';
 
 void main() {
   testWidgets('renders an empty state without trying to snap', (tester) async {

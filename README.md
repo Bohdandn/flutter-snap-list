@@ -1,4 +1,4 @@
-# snap_list
+# flutter_snap_list
 
 A Flutter widget for displaying a list of dynamically sized items with snapping,
 scale, and opacity effects.
@@ -7,11 +7,11 @@ scale, and opacity effects.
 
 ## Installation
 
-Add `snap_list` to your `pubspec.yaml`:
+Add `flutter_snap_list` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  snap_list: ^0.1.0
+  flutter_snap_list: ^0.1.0
 ```
 
 ## Usage
@@ -40,7 +40,7 @@ For programmatic scrolling, pass an `ItemScrollController` through
 
 ## Example
 
-See it in action at [lingoreads.com](https://lingoreads.com/) in the **Plan** tab.
+See it in action at [lingoreads.com](https://lingoreads.com/) in the **Weekly Plan** tab.
 
 ## License
 
