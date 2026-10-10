@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_snap_list/flutter_snap_list.dart';
@@ -228,6 +229,101 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('ignores mouse wheel scrolling over list items', (tester) async {
+    final changedIndexes = <int>[];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SnapList<int>(
+          items: const [0, 1, 2, 3],
+          itemBuilder: (context, item) => SizedBox(
+            key: ValueKey('wheel-item-$item'),
+            height: 180,
+            child: Text('Item $item'),
+          ),
+          minScale: 1,
+          maxScale: 1,
+          onCurrentItemChanged: changedIndexes.add,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(changedIndexes, [0]);
+    final itemCenterBeforeScroll = tester.getCenter(find.byKey(const ValueKey('wheel-item-0')));
+    await tester.sendEventToBinding(
+      PointerHoverEvent(
+        pointer: 1,
+        device: 1,
+        kind: PointerDeviceKind.mouse,
+        position: itemCenterBeforeScroll,
+      ),
+    );
+    await tester.sendEventToBinding(
+      PointerScrollEvent(
+        device: 1,
+        kind: PointerDeviceKind.mouse,
+        position: itemCenterBeforeScroll,
+        scrollDelta: const Offset(0, 300),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(changedIndexes, [0]);
+    expect(
+      tester.getCenter(find.byKey(const ValueKey('wheel-item-0'))),
+      itemCenterBeforeScroll,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('centers snapped items within a constrained scroll viewport', (tester) async {
+    final changedIndexes = <int>[];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: SizedBox(
+            height: 400,
+            width: 300,
+            child: SnapList<int>(
+              items: const [0, 1, 2, 3, 4, 5, 6, 7],
+              itemBuilder: (context, item) => SizedBox(
+                key: ValueKey('center-item-$item'),
+                height: 160,
+                child: Text('Item $item'),
+              ),
+              minScale: 1,
+              maxScale: 1,
+              padding: const EdgeInsets.symmetric(vertical: 22),
+              onCurrentItemChanged: changedIndexes.add,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.byKey(const Key('snap_scroll')), const Offset(0, -130));
+    await tester.pumpAndSettle();
+
+    expect(changedIndexes.last, 1);
+    final viewport = tester.getRect(find.byKey(const Key('snap_scroll')));
+    final selectedItem = tester.getRect(find.byKey(const ValueKey('center-item-1')));
+    final previousItem = tester.getRect(find.byKey(const ValueKey('center-item-0')));
+    final nextItem = tester.getRect(find.byKey(const ValueKey('center-item-2')));
+    expect(
+      selectedItem.center.dy,
+      closeTo(viewport.center.dy, 1),
+      reason: 'viewport: $viewport; selected item: $selectedItem',
+    );
+    expect(selectedItem.top, greaterThanOrEqualTo(viewport.top));
+    expect(selectedItem.bottom, lessThanOrEqualTo(viewport.bottom));
+    expect(previousItem.bottom, greaterThan(viewport.top));
+    expect(nextItem.top, lessThan(viewport.bottom));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('keeps top and bottom overlays at the viewport edges while scrolling', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -310,6 +406,49 @@ void main() {
     await tester.pumpAndSettle();
     expect(changedIndexes.last, 1);
     expect(tester.getBottomRight(find.byKey(const ValueKey('long-item-0'))).dy, lessThan(viewportBottom));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('snaps back to the bottom of a long first item', (tester) async {
+    final changedIndexes = <int>[];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SnapList<int>(
+          items: const [0, 1, 2],
+          itemBuilder: _buildLongItem,
+          onCurrentItemChanged: changedIndexes.add,
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    await tester.timedDrag(
+      find.byKey(const Key('snap_scroll')),
+      const Offset(0, -400),
+      const Duration(seconds: 1),
+    );
+    await tester.pumpAndSettle();
+    await tester.timedDrag(
+      find.byKey(const Key('snap_scroll')),
+      const Offset(0, -400),
+      const Duration(seconds: 1),
+    );
+    await tester.pumpAndSettle();
+    expect(changedIndexes.last, 1);
+
+    await tester.timedDrag(
+      find.byKey(const Key('snap_scroll')),
+      const Offset(0, 400),
+      const Duration(seconds: 1),
+    );
+    await tester.pumpAndSettle();
+
+    final viewport = tester.getRect(find.byKey(const Key('snap_scroll')));
+    final longItem = tester.getRect(find.byKey(const ValueKey('long-item-0')));
+    expect(changedIndexes.last, 0);
+    expect(longItem.bottom, closeTo(viewport.bottom - 48, 1));
     expect(tester.takeException(), isNull);
   });
 

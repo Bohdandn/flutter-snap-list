@@ -1,0 +1,13 @@
+{
+  "files.trimTrailingWhitespace": true,
+  "editor.wordBasedSuggestions": "off",
+  "editor.detectIndentation": false,
+  "editor.formatOnSave": true,
+  "eslint.format.enable": true,
+    "cSpell.words": [
+        "subosito"
+    ],
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-action.json": ".github/actions/**/*.yml"
+  }
+}

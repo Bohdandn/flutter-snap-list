@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_snap_list_example/main.dart';
@@ -13,6 +14,26 @@ void main() {
     expect(find.byKey(const Key('snap_scroll')), findsOneWidget);
     expect(find.byKey(const Key('current-item-indicator')), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('supports mouse dragging without showing scrollbars', (tester) async {
+    await tester.pumpWidget(const SnapListExampleApp());
+    await tester.pumpAndSettle();
+
+    final mouseRegion = tester.widget<MouseRegion>(
+      find
+          .ancestor(
+            of: find.byKey(const Key('snap_scroll')),
+            matching: find.byType(MouseRegion),
+          )
+          .first,
+    );
+    final scrollBehavior = ScrollConfiguration.of(
+      tester.element(find.byKey(const Key('snap_scroll'))),
+    );
+    expect(mouseRegion.cursor, SystemMouseCursors.click);
+    expect(scrollBehavior.dragDevices, contains(PointerDeviceKind.mouse));
+    expect(find.byType(Scrollbar), findsNothing);
   });
 
   testWidgets('uses a fixed phone-sized preview on wider screens', (tester) async {

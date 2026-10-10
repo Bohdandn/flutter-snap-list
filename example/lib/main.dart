@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_snap_list/flutter_snap_list.dart';
 
@@ -88,6 +89,7 @@ class SnapListExampleApp extends StatelessWidget {
     return MaterialApp(
       title: 'SnapList — Flutter example',
       debugShowCheckedModeBanner: false,
+      scrollBehavior: const _MouseDragScrollBehavior(),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF456B59),
@@ -109,6 +111,24 @@ class SnapListExampleApp extends StatelessWidget {
       home: const SnapListExamplePage(),
     );
   }
+}
+
+class _MouseDragScrollBehavior extends MaterialScrollBehavior {
+  const _MouseDragScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        ...super.dragDevices,
+        PointerDeviceKind.mouse,
+      };
+
+  @override
+  Widget buildScrollbar(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) =>
+      child;
 }
 
 class SnapListExamplePage extends StatefulWidget {
@@ -219,21 +239,24 @@ class _SnapListExamplePageState extends State<SnapListExamplePage> {
                               borderRadius: BorderRadius.circular(24),
                               child: ColoredBox(
                                 color: const Color(0xFFECEEE9),
-                                child: SnapList<DemoCard>(
-                                  key: ValueKey(_mode),
-                                  items: items,
-                                  spacing: 20,
-                                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
-                                  minScale: 0.9,
-                                  maxScale: 1,
-                                  minOpacity: 0.45,
-                                  maxOpacity: 1,
-                                  itemBuilder: (context, card) => _DemoCardView(card: card),
-                                  onCurrentItemChanged: (index) {
-                                    if (mounted && _currentIndex != index) {
-                                      setState(() => _currentIndex = index);
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: SnapList<DemoCard>(
+                                    key: ValueKey(_mode),
+                                    items: items,
+                                    spacing: 20,
+                                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
+                                    minScale: 0.9,
+                                    maxScale: 1,
+                                    minOpacity: 0.45,
+                                    maxOpacity: 1,
+                                    itemBuilder: (context, card) => _DemoCardView(card: card),
+                                    onCurrentItemChanged: (index) {
+                                      if (mounted && _currentIndex != index) {
+                                        setState(() => _currentIndex = index);
+                                      }
                                     }
-                                  },
+                                  ),
                                 ),
                               ),
                             ),

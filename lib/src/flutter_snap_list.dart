@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -91,6 +92,7 @@ class _SnapListState<TValue> extends State<SnapList<TValue>> {
 
   // --- State Variables ---
   int _centerIndex = 0; // Tracks the index intended to be centered
+  late double _viewportHeight;
   // Track if during this drag we ever crossed to the next/prev item
   double _dragStartCenterPosition = 0;
 
@@ -146,7 +148,6 @@ class _SnapListState<TValue> extends State<SnapList<TValue>> {
       _dragStartCenterPosition = scrollNotification.metrics.pixels;
     }
 
-    // 3) on drag end, ignore primaryVelocity, use our last direction
     if (scrollNotification is ScrollEndNotification && scrollNotification.dragDetails != null) {
       final start = _centerIndex;
       final scrolledDiff = scrollNotification.metrics.pixels - _dragStartCenterPosition;
@@ -160,8 +161,8 @@ class _SnapListState<TValue> extends State<SnapList<TValue>> {
         return;
       }
 
-      final screenHeight = MediaQuery.of(context).size.height;
-      final thresholdHeight = screenHeight - widget.topOverlayHeight - widget.bottomOverlayHeight - widget.spacing * 2;
+      final viewportHeight = _viewportHeight;
+      final thresholdHeight = viewportHeight - widget.topOverlayHeight - widget.bottomOverlayHeight - widget.spacing * 2;
 
       // Special behavior for long cards
       if (cardHeight > thresholdHeight) {
@@ -182,9 +183,9 @@ class _SnapListState<TValue> extends State<SnapList<TValue>> {
 
         final visibleTargetHeight = down
             // Item is visible above nav bar + gap
-            ? screenHeight - screenHeight * scrollPosition.itemLeadingEdge - widget.bottomOverlayHeight
+            ? viewportHeight - viewportHeight * scrollPosition.itemLeadingEdge - widget.bottomOverlayHeight
             // Item is visible below app bar + gap
-            : screenHeight * scrollPosition.itemTrailingEdge - widget.topOverlayHeight;
+            : viewportHeight * scrollPosition.itemTrailingEdge - widget.topOverlayHeight;
 
         // Scrolling down, let's check if next card is at least partially visible
         //print('Target card $target visibility is $visibleTargetHeight px');
@@ -261,29 +262,29 @@ class _SnapListState<TValue> extends State<SnapList<TValue>> {
 
     // print('Snapping to $targetIndex [0..${_items.length - 1}] with height $itemHeight');
 
-    final screenHeight = MediaQuery.of(context).size.height;
-    final thresholdHeight = screenHeight - widget.topOverlayHeight - widget.bottomOverlayHeight - widget.spacing * 2;
+    final viewportHeight = _viewportHeight;
+    final thresholdHeight = viewportHeight - widget.topOverlayHeight - widget.bottomOverlayHeight - widget.spacing * 2;
 
     double alignment;
     if (first) {
       alignment = widget.initialAlignment.clamp(0.0, 1.0);
-    } else if (targetIndex == 0) {
-      alignment = ((widget.topOverlayHeight + widget.spacing * 2) / screenHeight).clamp(0, 1);
+    } else if (itemHeight < thresholdHeight && targetIndex == 0) {
+      alignment = ((widget.topOverlayHeight + widget.spacing * 2) / viewportHeight).clamp(0, 1);
       //} else if (targetIndex == _items.length - 1) {
-      //  alignment = (itemHeight + widget.bottomOverlayHeight + widget.spacing) / screenHeight;
+      //  alignment = (itemHeight + widget.bottomOverlayHeight + widget.spacing) / viewportHeight;
     } else if (itemHeight < thresholdHeight) {
-      alignment = (((screenHeight / 2) - (itemHeight / 2)) / screenHeight).clamp(0, 1);
+      alignment = (((viewportHeight / 2) - (itemHeight / 2)) / viewportHeight).clamp(0, 1);
     } else {
       // For items taller than threshold, align based on scroll direction
       if (down) {
         // Align to top if scrolling down
-        alignment = (widget.topOverlayHeight + widget.spacing * 2) / screenHeight;
+        alignment = (widget.topOverlayHeight + widget.spacing * 2) / viewportHeight;
       } else {
         // Align to bottom if scrolling up
         final bottomGap = widget.bottomOverlayHeight + widget.spacing * 2;
-        final cardTopToScreenBottom = itemHeight + bottomGap;
-        final cardTopGap = screenHeight - cardTopToScreenBottom; // gap between card top and screen top
-        alignment = cardTopGap / screenHeight;
+        final cardTopToViewportBottom = itemHeight + bottomGap;
+        final cardTopGap = viewportHeight - cardTopToViewportBottom;
+        alignment = cardTopGap / viewportHeight;
       }
     }
 
@@ -373,47 +374,54 @@ class _SnapListState<TValue> extends State<SnapList<TValue>> {
       return const Center(child: Text('No items to display.'));
     }
 
-    final screenHeight = MediaQuery.of(context).size.height;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        _viewportHeight = constraints.maxHeight;
+        return NotificationListener<ScrollNotification>(
+          onNotification: (scrollNotification) {
+            _onScroll(scrollNotification);
+            return false;
+          },
+          child: ScrollablePositionedList.separated(
+            key: const Key('snap_scroll'),
+            itemCount: itemCount,
+            itemScrollController: _itemScrollController,
+            itemPositionsListener: _itemPositionsListener,
+            initialScrollIndex: widget.initialIndex,
+            physics: widget.physics,
+            padding: widget.padding,
+            separatorBuilder: (context, index) => SizedBox(height: widget.spacing),
+            // initialScrollIndex and initialAlignment are handled by the jumpTo in _fetchInitialItems
+            itemBuilder: (context, index) {
+              // --- Actual List Item with dynamic scaling & opacity ---
+              if (index >= 0 && index < widget.items.length) {
+                // interpolate scale and opacity based on scroll position
+                final t = _getCardInterpolationFactor(index, _viewportHeight);
+                final scale = widget.minScale + (widget.maxScale - widget.minScale) * t;
+                final opacity = widget.minOpacity + (widget.maxOpacity - widget.minOpacity) * t;
+                final item = widget.items[index];
 
-    return NotificationListener<ScrollNotification>(
-      onNotification: (scrollNotification) {
-        _onScroll(scrollNotification);
-        return false;
+                return Listener(
+                  onPointerSignal: (event) {
+                    if (event is PointerScrollEvent) {
+                      GestureBinding.instance.pointerSignalResolver.register(event, (_) {});
+                    }
+                  },
+                  child: Container(
+                    key: _itemKeys.putIfAbsent(index, GlobalKey.new),
+                    child: Transform.scale(
+                      scale: scale,
+                      child: Opacity(opacity: opacity, child: widget.itemBuilder(context, item)),
+                    ),
+                  ),
+                );
+              }
+
+              return const SizedBox.shrink();
+            },
+          ),
+        );
       },
-      child: ScrollablePositionedList.separated(
-        key: const Key('snap_scroll'),
-        itemCount: itemCount,
-        itemScrollController: _itemScrollController,
-        itemPositionsListener: _itemPositionsListener,
-        initialScrollIndex: widget.initialIndex,
-        physics: widget.physics,
-        padding: widget.padding,
-        separatorBuilder: (context, index) => SizedBox(height: widget.spacing),
-        // initialScrollIndex and initialAlignment are handled by the jumpTo in _fetchInitialItems
-        itemBuilder: (context, index) {
-          // --- Actual List Item with dynamic scaling & opacity ---
-          if (index >= 0 && index < widget.items.length) {
-            // interpolate scale and opacity based on widget properties
-            final t = _getCardInterpolationFactor(index, screenHeight);
-            final scale = widget.minScale + (widget.maxScale - widget.minScale) * t;
-            final opacity = widget.minOpacity + (widget.maxOpacity - widget.minOpacity) * t;
-            final item = widget.items[index];
-
-            return Container(
-              key: _itemKeys.putIfAbsent(index, GlobalKey.new),
-              //color: Colors.yellow,
-              child: Transform.scale(
-                scale: scale,
-                child: Opacity(opacity: opacity, child: widget.itemBuilder(context, item)),
-              ),
-            );
-          }
-
-          // Should only happen if itemCount/indexing logic has an issue,
-          // return an empty box as a safeguard.
-          return const SizedBox.shrink();
-        },
-      ),
     );
   }
 }
