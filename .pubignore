@@ -1,2 +1,5 @@
 /build/
 /lib/src/easter_egg.gif
+/example/build/
+/.github/
+/.vscode/

@@ -1,9 +1,10 @@
 # flutter_snap_list
 
-[![CI](https://github.com/Bohdandn/flutter-snap-list/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Bohdandn/flutter-snap-list/actions/workflows/ci.yml)
+[![CI/CD](https://github.com/Bohdandn/flutter-snap-list/actions/workflows/ci-cd.yml/badge.svg?branch=main)](https://github.com/Bohdandn/flutter-snap-list/actions/workflows/ci-cd.yml)
 
-A Flutter widget for displaying a list of dynamically sized items with snapping,
-scale, and opacity effects.
+A mobile-focused Flutter widget for displaying a list of dynamically sized
+items with snapping, scale, and opacity effects. It is designed for touch-first
+interfaces where users browse one item at a time.
 
 <img src="images/example.png" alt="Example" width="500">
 
@@ -42,7 +43,26 @@ For programmatic scrolling, pass an `ItemScrollController` through
 
 ## Example
 
-See it in action at [lingoreads.com](https://lingoreads.com/) in the **Weekly Plan** tab.
+Once the Pages workflow has deployed, try the interactive
+[web example](https://bohdandn.github.io/flutter-snap-list/), which demonstrates
+long mobile-style cards, the empty state, and items taller than the viewport.
+Navigate the cards by swiping up or down. On larger screens, the page frames
+the example as a phone-sized preview.
+
+To run the example locally:
+
+```sh
+cd example
+flutter pub get
+flutter run -d chrome
+```
+
+The web example is deployed to GitHub Pages when changes are pushed to `main`.
+If Pages has not been enabled for the repository yet, select **GitHub Actions**
+as the build and deployment source in the repository's Pages settings.
+
+For a production example, see [lingoreads.com](https://lingoreads.com/) in the
+**Weekly Plan** tab.
 
 ## License
 
