@@ -65,9 +65,16 @@ jobs:
             local title="$1"
             local outcome="$2"
             local report_file="$3"
+            local status_icon
+
+            if [[ "$outcome" == "success" ]]; then
+              status_icon="🟢"
+            else
+              status_icon="🔴"
+            fi
 
             {
-              printf '## %s (%s)\n\n```text\n' "$title" "$outcome"
+              printf '## %s %s\n\n```text\n' "$status_icon" "$title"
               if [[ -f "$report_file" ]]; then
                 sed '/^::group::/d; /^::endgroup::/d' "$report_file"
               else

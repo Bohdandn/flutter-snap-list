@@ -417,6 +417,8 @@ void main() {
         home: SnapList<int>(
           items: const [0, 1, 2],
           itemBuilder: _buildLongItem,
+          minScale: 1,
+          maxScale: 1,
           onCurrentItemChanged: changedIndexes.add,
         ),
       ),
