@@ -1,3 +1,3 @@
 # This line will ensure all text files use LF line endings on git checkout.
 # Must be in sync with .editorconfig
-* text eol=lf
+* text=auto eol=lf
